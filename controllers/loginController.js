@@ -1,23 +1,37 @@
-const userModel = require('../models/userModels');
+let users = require('../memoryStore');
 
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET;
 const saltRounds = 10;
 
 
 // Register new user
 const signUp = async (req, res) => {
-    if (!req.body.email) {
-        res.status(400).send({ message: 'Email fill is required.' });
-    }
-
     req.body.password = await bcrypt.hash(req.body.password, saltRounds);
-
-    userModel.create(req.body).then((dbUser) => {
-        res.status(200).send({ message: `User Created${dbUser}` });
-    }).catch((err) => {
-        console.log(err)
-        res.status(500).send({ message: 'Error Creating User' });
-    });
+    users.push(req.body);
+    res.status(200).json({ status: 'success', message: 'User Created.' });
 }
 
-module.exports = { signUp };
+// Login of an existing user
+const logIn = async (req, res) => {
+    const resUser = {
+        name: users.name,
+        email: users.email
+    };
+
+    const token = await jwt.sign(resUser, JWT_SECRET, { expiresIn: '1h' });
+
+    users = { ...users[0], token };
+    return res.status(200).json(users);
+}
+
+// API for GET all preferences from an exsiting user
+const getPreferences = async (req, res) => {
+    if(req.user) {
+        const preferences = {'preferences': users['preferences']};
+        return res.status(200).json(preferences);
+    }
+}
+
+module.exports = { signUp, logIn, getPreferences };
