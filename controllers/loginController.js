@@ -26,12 +26,4 @@ const logIn = async (req, res) => {
     return res.status(200).json(users);
 }
 
-// API for GET all preferences from an exsiting user
-const getPreferences = async (req, res) => {
-    if(req.user) {
-        const preferences = {'preferences': users['preferences']};
-        return res.status(200).json(preferences);
-    }
-}
-
-module.exports = { signUp, logIn, getPreferences };
+module.exports = { signUp, logIn };
