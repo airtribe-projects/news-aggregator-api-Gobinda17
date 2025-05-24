@@ -1,9 +1,15 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
+const {router, newsRoute} = require('./routes/apiRoutes');
 const port = 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use('/users', router);
+app.use('/news', newsRoute);
+
 
 app.listen(port, (err) => {
     if (err) {
@@ -11,7 +17,5 @@ app.listen(port, (err) => {
     }
     console.log(`Server is listening on ${port}`);
 });
-
-
 
 module.exports = app;
