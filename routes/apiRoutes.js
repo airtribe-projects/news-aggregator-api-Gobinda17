@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
+const newsRoute = express.Router();
 
 const { signUp, logIn } = require('../controllers/loginController');
-const { getPreferences, updatePreferences } = require('../controllers/dataController');
+const { getPreferences, updatePreferences, newsData } = require('../controllers/dataController');
 
 const { checkExistingUser, verifyLoginUser, verifyJWT } = require('../middlewares/auth');
 
@@ -18,4 +19,7 @@ router.get("/preferences", [verifyJWT], getPreferences);
 // API to update user preferences
 router.put("/preferences", [verifyJWT], updatePreferences);
 
-module.exports = router;
+// API to fetch news and updates
+newsRoute.get("/", [verifyJWT], newsData);
+
+module.exports = {router, newsRoute};
