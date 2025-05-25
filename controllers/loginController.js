@@ -1,4 +1,6 @@
-let users = require('../memoryStore');
+const { validationResult} = require('express-validator');
+
+let {users} = require('../memoryStore');
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -8,6 +10,12 @@ const saltRounds = 10;
 
 // Register new user
 const signUp = async (req, res) => {
+    const validateResult = validationResult(req);
+
+    if(!validateResult.isEmpty()) {
+        return res.status(400).json({ status: 'fail', message: validateResult.array() });
+    }
+
     req.body.password = await bcrypt.hash(req.body.password, saltRounds);
     users.push(req.body);
     res.status(200).json({ status: 'success', message: 'User Created.' });

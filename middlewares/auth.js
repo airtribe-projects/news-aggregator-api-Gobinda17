@@ -1,4 +1,4 @@
-const users = require('../memoryStore');
+const {users} = require('../memoryStore');
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -38,7 +38,7 @@ const verifyLoginUser = async (req, res, next) => {
 const verifyJWT = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if(!authHeader) {
-        return res.status(401).send({text: 'Token not provided.'});
+        return res.status(401).send({ error: 'Unauthorized access' });
     }
 
     const token = authHeader.split(' ')[1];

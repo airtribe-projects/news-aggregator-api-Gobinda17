@@ -1,3 +1,5 @@
 const users = [];
+const readArticles = {};
+const favoriteArticles = {};
 
-module.exports = users;
+module.exports = {users, readArticles, favoriteArticles};
