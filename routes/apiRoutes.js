@@ -5,7 +5,7 @@ const newsRoute = express.Router();
 const { registerValidation } = require('../middlewares/validations');
 
 const { signUp, logIn } = require('../controllers/loginController');
-const { getPreferences, updatePreferences, newsData, markAsRead, markAsFavorite, allMarkedRead, allMarkedFavorite } = require('../controllers/dataController');
+const { getPreferences, updatePreferences, newsData, markAsRead, markAsFavorite, allMarkedRead, allMarkedFavorite, searchBasedKeywords } = require('../controllers/dataController');
 
 const { checkExistingUser, verifyLoginUser, verifyJWT } = require('../middlewares/auth');
 
@@ -34,6 +34,9 @@ newsRoute.post("/:id/favorite", [verifyJWT], markAsFavorite);
 newsRoute.get("/read", [verifyJWT], allMarkedRead);
 
 // API to retrive all favorite articles
-newsRoute.get("/favorite", [verifyJWT], allMarkedFavorite);
+newsRoute.get("/favorites", [verifyJWT], allMarkedFavorite);
+
+// API to search articles based on keywords
+newsRoute.get("/search/:keyword", [verifyJWT], searchBasedKeywords)
 
 module.exports = { router, newsRoute };

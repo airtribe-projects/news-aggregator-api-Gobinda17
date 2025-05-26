@@ -62,6 +62,24 @@ const newsData = async (req, res) => {
     }
 }
 
+
+
+// Function to periodically update the cached news articles in the background.
+setInterval(async() => {
+    try {
+        const now = Date.now();
+    
+        const news = await axios.get(`https://gnews.io/api/v4/search?q=example&lang=en&country=us&max=10&apikey=${API_KEY}`);
+    
+        newsCache.data = news.data.articles.map(article => (
+            [article]
+        ));
+        newsCache.timestamp = now;
+    } catch(error) {
+        return res.status(500).json({error: 'Failed to cached artcles.'})
+    }
+}, 10000); //Update every after 10sec
+
 // API to mark an article as read
 const markAsRead = async (req, res) => {
     try {
@@ -70,11 +88,15 @@ const markAsRead = async (req, res) => {
         }
 
         const userEmail = req.body.email;
-        const articleId = Number(req.params.id);
+        if (!userEmail) {
+            return res.status(500).json({ error: 'Failed to mark article as read' });
+        }
+        const articleId = req.params.id;
 
         if (!readArticles[userEmail]) {
             readArticles[userEmail] = new Set();
         }
+
         readArticles[userEmail].add(articleId);
 
         return res.status(200).json({ status: 'success', message: 'Article marked as read' });
@@ -92,6 +114,9 @@ const markAsFavorite = async (req, res) => {
         }
 
         const userEmail = req.body.email;
+        if (!userEmail) {
+            return res.status(500).json({ error: 'Failed to mark article as favorite' });
+        }
         const articleId = Number(req.params.id);
 
         if (!favoriteArticles[userEmail]) {
@@ -109,26 +134,64 @@ const markAsFavorite = async (req, res) => {
 // API for retrieving all read articles
 const allMarkedRead = async (req, res) => {
     try {
-        if(!req.user) {
+        if (!req.user) {
             return res.status(401).json({ error: 'Unauthorized access' });
         }
 
-        const userEmail = req.body.email;
-        const markedReadArticlesIds = new Array.from(readArticles[userEmail] || []);
+        const userEmail = await req.body.email;
+        if (!userEmail) {
+            return res.status(500).json({ error: 'Email required.' });
+        }
+        const markedReadArticlesIds = Array.from(readArticles[userEmail]);
+
         const markedReadArticles = markedReadArticlesIds.map(id => {
-            return newsCache.data.find(article => article[0].id === id);
-        }).filter(article => article);
+            return newsCache.data[id];
+        });
 
         return res.status(200).json({ readArticles: markedReadArticles });
 
     } catch (error) {
-        return res.status(500).json({ error: 'Failed to retrieve read articles' });
+        return res.status(500).json({ error: 'Failed to retrieve all read articles.' });
     }
 }
 
 // API for retrieving all favorite articles
 const allMarkedFavorite = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ error: 'Unauthorized access' });
+        }
 
+        const userEmail = req.body.email;
+        if (!userEmail) {
+            return res.status(500).json({ error: 'Email is required.' });
+        }
+        const markedFavoriteArticlesIds = Array.from(favoriteArticles[userEmail]);
+        const markedFavoriteArticles = markedFavoriteArticlesIds.map(id => {
+            return newsCache.data[id];
+        });
+
+        return res.status(200).json({ favoriteArticles: markedFavoriteArticles });
+    } catch (error) {
+        return res.status(500).json({ error: 'Failed to retrieve all favorite articles' });
+    }
 }
 
-module.exports = { getPreferences, updatePreferences, newsData, markAsRead, markAsFavorite, allMarkedRead, allMarkedFavorite };
+// API to search articles based on keywords
+const searchBasedKeywords = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ error: 'Unauthorized access' });
+        }
+
+        const keyword = req.params.keyword;
+        const serachArticles = newsCache.data.map(article => article.filter(item => item.title.toLowerCase().includes(keyword) || item.content.toLowerCase().includes(keyword))).filter(item => item.length > 0);
+
+        return res.status(200).json({ searchArticle: serachArticles });
+
+    } catch (error) {
+        return res.status(500).json({ error: 'Failed to retrieve articles' });
+    }
+}
+
+module.exports = { getPreferences, updatePreferences, newsData, markAsRead, markAsFavorite, allMarkedRead, allMarkedFavorite, searchBasedKeywords };
